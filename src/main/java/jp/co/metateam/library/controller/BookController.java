@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
+import jp.co.metateam.library.model.Account;
+import jp.co.metateam.library.model.AccountDto;
 import jp.co.metateam.library.model.BookMst;
 import jp.co.metateam.library.model.BookMstDto;
 import jp.co.metateam.library.service.BookMstService;
@@ -50,5 +52,56 @@ public class BookController {
 
         return "book/add";
     }
+
+    @PostMapping("book/add")
+        public String register(@Valid @ModelAttribute BookMstDto bookMstDto, BindingResult result, RedirectAttributes ra){
+            try{
+                
+                boolean errTitleFlag = false;
+                boolean errIsbnFlag = false;
+
+                String titleCheck = bookMstDto.getTitle();
+                String isbnCheck = bookMstDto.getIsbn();
+
+    
+                if(titleCheck == null || titleCheck.isEmpty()){
+                    result.rejectValue("title", "error.value", "書籍名を入力してください");
+                    errTitleFlag = true;
+                }
+                if(isbnCheck == null || titleCheck.isEmpty()){
+                    result.rejectValue("isbn", "error.value", "ISBNを入力してください");
+                    errIsbnFlag = true;
+                }
+                if (titleCheck.length() > 255){
+                    result.rejectValue("title", "error.value", "書籍名は255文字以内で入力してください");
+                    errTitleFlag = true;
+                }
+                if (isbnCheck.length() != 13){
+                    result.rejectValue("isbn", "error.value", "ISBNは13文字で入力してください");
+                    errIsbnFlag = true;
+                }
+                if (!isbnCheck.matches("^[\\p{ASCII}]*$")){
+                    result.rejectValue("isbn", "error.value", "ISBNは半角で入力してください"); 
+                    errIsbnFlag = true;  
+                }
+                if(bookMstService.searchIsbn(isbnCheck) != null && !bookMstService.searchIsbn(isbnCheck).isEmpty()){
+                    result.rejectValue("isbn", "error.value", "このISBNは既に登録済みです");
+                    errIsbnFlag = true;
+                }
+                if (errTitleFlag || errIsbnFlag) {
+                    throw new Exception("Please fill out the form.");
+                }
+
+                bookMstService.save(bookMstDto);
+                return "redirect:/book/index";
+            } catch(Exception e) {
+                
+                log.error(e.getMessage());
+                ra.addFlashAttribute("bookMstDto",bookMstDto);
+                ra.addFlashAttribute("org.springframework.validation.BindingResult.bookMstDto", result);
+                return "redirect:/book/add";
+            }
+    }
+    
     
 }
