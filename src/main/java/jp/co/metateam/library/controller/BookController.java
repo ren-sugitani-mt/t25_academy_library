@@ -84,7 +84,8 @@ public class BookController {
                     result.rejectValue("isbn", "error.value", "ISBNは半角で入力してください"); 
                     errIsbnFlag = true;  
                 }
-                if(bookMstService.searchIsbn(isbnCheck) != null && !bookMstService.searchIsbn(isbnCheck).isEmpty()){
+                String isbnExist = bookMstService.searchIsbn(isbnCheck);
+                if(isbnExist != null){
                     result.rejectValue("isbn", "error.value", "このISBNは既に登録済みです");
                     errIsbnFlag = true;
                 }
